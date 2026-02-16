@@ -28,8 +28,37 @@ def depthFirstSearch(problem: SearchProblem):
     print("Is the start a goal?", problem.isGoalState(problem.getStartState()))
     print("Start's successors:", problem.getSuccessors(problem.getStartState()))
     """
-    # TODO: Add your code here
-    utils.raiseNotDefined()
+    #Version inicial de DFS
+
+    #Creamos visitados, la pila y una estructrua para almacenar los padres
+    visited=set()
+    stack=utils.Stack()
+    parents={}
+
+    initial_state=problem.getStartState()
+    stack.push(initial_state)
+    #Se itera mientras no este vacia
+    while not stack.isEmpty(): 
+        current=stack.pop()
+        #Si se encuentra el estado objetivo se reconstruye el camino, se revierte y se devuelve
+        if problem.isGoalState(current):
+            path=[]
+            state=current
+            while state != initial_state: 
+                parent, action = parents[state]
+                path.append(action)
+                state=parent
+            path.reverse()
+            return path
+    #Si no ha sido visitado, se marca y se agregan los sucesores a la pila y se guarda en la estructura para almacenar la ruta padre-hijo
+        if current not in visited: 
+            visited.add(current)
+            for node,action,cost in problem.getSuccessors(current):
+                if node not in visited:
+                    parents[node]= (current,action) 
+                    stack.push(node)
+    return []
+
 
 
 def breadthFirstSearch(problem: SearchProblem):
