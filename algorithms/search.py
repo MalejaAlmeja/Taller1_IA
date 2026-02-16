@@ -66,6 +66,8 @@ def breadthFirstSearch(problem: SearchProblem):
     Search the shallowest nodes in the search tree first.
     """
 
+    #Version inicial BFS
+
     visited=set()
     queue=utils.Queue()
     parents={}
@@ -101,9 +103,41 @@ def uniformCostSearch(problem: SearchProblem):
     """
     Search the node of least total cost first.
     """
+    #Version inicial UCS
 
-    # TODO: Add your code here
-    utils.raiseNotDefined()
+    visited=set()
+    queue=utils.PriorityQueue()
+    parents={}
+
+    initial_state=problem.getStartState()
+    costs={initial_state:0} #Utilizamos una estructura de costos para saber cual es el menor costo que he encontrado
+    queue.push(initial_state,0)
+
+    while not queue.isEmpty():
+
+        current= queue.pop()
+        #Si se encuentra el estado objetivo despues de sacar de la cola de prioridad, se reconstruye el camino y se retorna
+        if problem.isGoalState(current):
+            path=[]
+            state=current
+            while state != initial_state: 
+                parent, action = parents[state]
+                path.append(action)
+                state=parent
+            path.reverse()
+            return path
+        #Si el actual no esta visitado, lo marco y miro sus sucesores
+        if current not in visited: 
+            visited.add(current)
+            for node,action,cost in problem.getSuccessors(current):
+                new_cost=costs[current] + cost
+                if node not in visited and (node not in costs or costs[node]> new_cost): #Solo modifico los costos de los sucesores si no han sido visitados o si hay un costo menor al que ya habia encontrado
+                    costs[node]=new_cost
+                    parents[node]= (current,action) 
+                    queue.update(node,new_cost)
+    return []
+
+
 
 
 def aStarSearch(problem: SearchProblem, heuristic=nullHeuristic):
