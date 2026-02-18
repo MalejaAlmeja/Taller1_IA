@@ -155,7 +155,7 @@ def aStarSearch(problem: SearchProblem, heuristic=nullHeuristic):
 
     while not queue.isEmpty():
         current= queue.pop()
-        if problem.isGoalState(current): #Evaluamos una vez sacamos de pila
+        if problem.isGoalState(current): #Evaluar una vez sacamos de pila
             path=[]
             state=current
             while state != initial_state: 

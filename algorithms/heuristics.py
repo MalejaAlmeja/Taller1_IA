@@ -40,5 +40,27 @@ def survivorHeuristic(state: Tuple[Tuple, Any], problem: MultiSurvivorProblem):
     - Consider: distance to nearest survivor + MST of remaining survivors
     - Balance heuristic strength vs. computation time (do experiments!)
     """
-    # TODO: Add your code here
-    utils.raiseNotDefined()
+    problem.heuristicInfo
+    # No quedan sobrevivientes
+    if state[1].count() == 0:
+        return 0
+    
+    min_survivor_distance = float('inf')
+    #Tomar la distancia al sobreviviente más cercano
+    grid = state[1]
+    survivor_coordinates = grid.asList()
+    for survivor in survivor_coordinates:
+        #Lo hago con Manhattan
+        distance = abs(state[0][0] - survivor[0]) + abs(state[0][1] - survivor[1])
+        min_survivor_distance = min(min_survivor_distance, distance)
+    
+
+    #Tengo otra idea:
+    # 1. Hacer MST de los sobrevivientes restantes
+    # 2. Tomar la distancia al sobreviviente más cercano
+    # Pero no séeeeee
+    # Usar lo de problem.heuristicInfo para guardar la distancia entre sobrevivientes 
+    # y no tener que recalcularla cada vez maybe
+
+    return min_survivor_distance
+    
