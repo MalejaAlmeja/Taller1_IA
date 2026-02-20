@@ -26,19 +26,41 @@ def _reconstruct_path(parents, initial_state, goal_state):
 
 def depthFirstSearch(problem: SearchProblem):
     """
-    Search the deepest nodes in the search tree first.
 
-    Your search algorithm needs to return a list of actions that reaches the
-    goal. Make sure to implement a graph search algorithm.
+    Version inicial de DFS implementación autonoma: 
 
-    To get started, you might want to try some of these simple commands to
-    understand the search problem that is being passed in:
+    
+    #Creamos visitados, la pila y una estructrua para almacenar los padres
+    visited=set()
+    stack=utils.Stack()
+    parents={}
 
-    print("Start:", problem.getStartState())
-    print("Is the start a goal?", problem.isGoalState(problem.getStartState()))
-    print("Start's successors:", problem.getSuccessors(problem.getStartState()))
+    initial_state=problem.getStartState()
+    stack.push(initial_state)
+    #Se itera mientras no este vacia
+    while not stack.isEmpty(): 
+        current=stack.pop()
+        #Si se encuentra el estado objetivo se reconstruye el camino, se revierte y se devuelve
+        if problem.isGoalState(current):
+            path=[]
+            state=current
+            while state != initial_state: 
+                parent, action = parents[state]
+                path.append(action)
+                state=parent
+            path.reverse()
+            return path
+    #Si no ha sido visitado, se marca y se agregan los sucesores a la pila y se guarda en la estructura para almacenar la ruta padre-hijo
+        if current not in visited: 
+            visited.add(current)
+            for node,action,cost in problem.getSuccessors(current):
+                if node not in visited:
+                    parents[node]= (current,action) 
+                    stack.push(node)
+    return []
+    
     """
-    #Version inicial de DFS
+    #Version Optimizada con IA
 
     #Creamos visitados, la pila y una estructrua para almacenar los padres
     visited = set()
@@ -68,10 +90,40 @@ def depthFirstSearch(problem: SearchProblem):
 
 def breadthFirstSearch(problem: SearchProblem):
     """
-    Search the shallowest nodes in the search tree first.
+    Version inicial de BFS implementación autonoma: 
+
+    visited=set()
+    queue=utils.Queue()
+    parents={}
+
+    initial_state=problem.getStartState()
+    visited.add(initial_state)
+    queue.push(initial_state)
+
+    #Se itera mientras no este vacia
+    while not queue.isEmpty(): 
+        current=queue.pop()
+        #Si se encuentra el estado objetivo se reconstruye el camino, se revierte y se devuelve
+        if problem.isGoalState(current):
+            path=[]
+            state=current
+            while state != initial_state: 
+                parent, action = parents[state]
+                path.append(action)
+                state=parent
+            path.reverse()
+            return path
+    #Se marca y se agregan los sucesores a la fila y se guarda en la estructura para almacenar la ruta padre-hijo
+        for node,action,cost in problem.getSuccessors(current):
+            if node not in visited:
+                visited.add(node)
+                parents[node]= (current,action) 
+                queue.push(node)
+    return []
+
     """
 
-    #Version inicial BFS
+    #Version Optimizada con IA
 
     visited = set()
     queue = utils.Queue()
@@ -106,7 +158,42 @@ def breadthFirstSearch(problem: SearchProblem):
 
 def uniformCostSearch(problem: SearchProblem):
     """
-    Search the node of least total cost first.
+
+    Version inicial de UCS implementación autonoma:
+
+    visited=set()
+    queue=utils.PriorityQueue()
+    parents={}
+
+    initial_state=problem.getStartState()
+    costs={initial_state:0} #Utilizamos una estructura de costos para saber cual es el menor costo que he encontrado
+    queue.push(initial_state,0)
+
+    while not queue.isEmpty():
+
+        current= queue.pop()
+        #Si se encuentra el estado objetivo despues de sacar de la cola de prioridad, se reconstruye el camino y se retorna
+        if problem.isGoalState(current):
+            path=[]
+            state=current
+            while state != initial_state: 
+                parent, action = parents[state]
+                path.append(action)
+                state=parent
+            path.reverse()
+            return path
+        #Si el actual no esta visitado, lo marco y miro sus sucesores
+        if current not in visited: 
+            visited.add(current)
+            for node,action,cost in problem.getSuccessors(current):
+                new_cost=costs[current] + cost
+                if node not in visited and (node not in costs or costs[node]> new_cost): #Solo modifico los costos de los sucesores si no han sido visitados o si hay un costo menor al que ya habia encontrado
+                    costs[node]=new_cost
+                    parents[node]= (current,action) 
+                    queue.update(node,new_cost)
+    return []
+
+
     """
     #Version inicial UCS
 
@@ -141,9 +228,40 @@ def uniformCostSearch(problem: SearchProblem):
 
 def aStarSearch(problem: SearchProblem, heuristic=nullHeuristic):
     """
-    Search the node that has the lowest combined cost and heuristic first.
+    Version inicial de A* implementación autonoma:
+
+     visited=set()
+    queue=utils.PriorityQueue()
+    parents={}
+
+    initial_state=problem.getStartState()
+    costs={initial_state:0}
+    queue.push(initial_state,heuristic(initial_state,problem))
+
+    while not queue.isEmpty():
+        current= queue.pop()
+        if problem.isGoalState(current): #Evaluar una vez sacamos de pila
+            path=[]
+            state=current
+            while state != initial_state: 
+                parent, action = parents[state]
+                path.append(action)
+                state=parent
+            path.reverse()
+            return path
+        
+        if current not in visited: 
+            visited.add(current)
+            for node,action,cost in problem.getSuccessors(current):
+                new_cost=costs[current] + cost
+                if node not in visited and (node not in costs or costs[node]> new_cost):
+                    costs[node]=new_cost
+                    parents[node]= (current,action) 
+                    queue.update(node,new_cost + heuristic(node,problem))
+    return []
+
     """
-    #Version inicial A*
+    #Version optimizada con IA
     visited = set()
     queue = utils.PriorityQueue()
     parents = {}
