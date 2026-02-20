@@ -31,32 +31,27 @@ def depthFirstSearch(problem: SearchProblem):
     #Version inicial de DFS
 
     #Creamos visitados, la pila y una estructrua para almacenar los padres
-    visited=set()
-    stack=utils.Stack()
-    parents={}
+    visited = set()
+    stack = utils.Stack()
+    parents = {}
 
-    initial_state=problem.getStartState()
+    initial_state = problem.getStartState()
     stack.push(initial_state)
-    #Se itera mientras no este vacia
-    while not stack.isEmpty(): 
-        current=stack.pop()
-        #Si se encuentra el estado objetivo se reconstruye el camino, se revierte y se devuelve
+
+    while not stack.isEmpty():
+        current = stack.pop()
+
+        # Verificar objetivo ANTES de marcar visitado para no perder estados
         if problem.isGoalState(current):
-            path=[]
-            state=current
-            while state != initial_state: 
-                parent, action = parents[state]
-                path.append(action)
-                state=parent
-            path.reverse()
-            return path
-    #Si no ha sido visitado, se marca y se agregan los sucesores a la pila y se guarda en la estructura para almacenar la ruta padre-hijo
-        if current not in visited: 
+            return _reconstruct_path(parents, initial_state, current)
+
+        if current not in visited:
             visited.add(current)
-            for node,action,cost in problem.getSuccessors(current):
+            for node, action, cost in problem.getSuccessors(current):
                 if node not in visited:
-                    parents[node]= (current,action) 
+                    parents[node] = (current, action)
                     stack.push(node)
+
     return []
 
 
@@ -68,33 +63,33 @@ def breadthFirstSearch(problem: SearchProblem):
 
     #Version inicial BFS
 
-    visited=set()
-    queue=utils.Queue()
-    parents={}
+    visited = set()
+    queue = utils.Queue()
+    parents = {}
 
-    initial_state=problem.getStartState()
+    initial_state = problem.getStartState()
+
+    # Verificación temprana si el inicio ya es meta
+    if problem.isGoalState(initial_state):
+        return []
+
     visited.add(initial_state)
     queue.push(initial_state)
 
-    #Se itera mientras no este vacia
-    while not queue.isEmpty(): 
-        current=queue.pop()
-        #Si se encuentra el estado objetivo se reconstruye el camino, se revierte y se devuelve
-        if problem.isGoalState(current):
-            path=[]
-            state=current
-            while state != initial_state: 
-                parent, action = parents[state]
-                path.append(action)
-                state=parent
-            path.reverse()
-            return path
-    #Se marca y se agregan los sucesores a la fila y se guarda en la estructura para almacenar la ruta padre-hijo
-        for node,action,cost in problem.getSuccessors(current):
+    while not queue.isEmpty():
+        current = queue.pop()
+
+        for node, action, cost in problem.getSuccessors(current):
             if node not in visited:
+                parents[node] = (current, action)
+
+                # Early exit: verificar al encolar evita expandir un nivel extra
+                if problem.isGoalState(node):
+                    return _reconstruct_path(parents, initial_state, node)
+
                 visited.add(node)
-                parents[node]= (current,action) 
                 queue.push(node)
+
     return []
 
 
@@ -105,36 +100,30 @@ def uniformCostSearch(problem: SearchProblem):
     """
     #Version inicial UCS
 
-    visited=set()
-    queue=utils.PriorityQueue()
-    parents={}
+    visited = set()
+    queue = utils.PriorityQueue()
+    parents = {}
 
-    initial_state=problem.getStartState()
-    costs={initial_state:0} #Utilizamos una estructura de costos para saber cual es el menor costo que he encontrado
-    queue.push(initial_state,0)
+    initial_state = problem.getStartState()
+    costs = {initial_state: 0}
+    queue.push(initial_state, 0)
 
     while not queue.isEmpty():
+        current = queue.pop()
 
-        current= queue.pop()
-        #Si se encuentra el estado objetivo despues de sacar de la cola de prioridad, se reconstruye el camino y se retorna
+        # Verificar goal al desencolar garantiza optimalidad en UCS
         if problem.isGoalState(current):
-            path=[]
-            state=current
-            while state != initial_state: 
-                parent, action = parents[state]
-                path.append(action)
-                state=parent
-            path.reverse()
-            return path
-        #Si el actual no esta visitado, lo marco y miro sus sucesores
-        if current not in visited: 
+            return _reconstruct_path(parents, initial_state, current)
+
+        if current not in visited:
             visited.add(current)
-            for node,action,cost in problem.getSuccessors(current):
-                new_cost=costs[current] + cost
-                if node not in visited and (node not in costs or costs[node]> new_cost): #Solo modifico los costos de los sucesores si no han sido visitados o si hay un costo menor al que ya habia encontrado
-                    costs[node]=new_cost
-                    parents[node]= (current,action) 
-                    queue.update(node,new_cost)
+            for node, action, cost in problem.getSuccessors(current):
+                new_cost = costs[current] + cost
+                if node not in visited and (node not in costs or costs[node] > new_cost):
+                    costs[node] = new_cost
+                    parents[node] = (current, action)
+                    queue.update(node, new_cost)
+
     return []
 
 
@@ -145,34 +134,30 @@ def aStarSearch(problem: SearchProblem, heuristic=nullHeuristic):
     Search the node that has the lowest combined cost and heuristic first.
     """
     #Version inicial A*
-    visited=set()
-    queue=utils.PriorityQueue()
-    parents={}
+    visited = set()
+    queue = utils.PriorityQueue()
+    parents = {}
 
-    initial_state=problem.getStartState()
-    costs={initial_state:0}
-    queue.push(initial_state,heuristic(initial_state,problem))
+    initial_state = problem.getStartState()
+    costs = {initial_state: 0}
+    queue.push(initial_state, heuristic(initial_state, problem))
 
     while not queue.isEmpty():
-        current= queue.pop()
-        if problem.isGoalState(current): #Evaluar una vez sacamos de pila
-            path=[]
-            state=current
-            while state != initial_state: 
-                parent, action = parents[state]
-                path.append(action)
-                state=parent
-            path.reverse()
-            return path
-        
-        if current not in visited: 
+        current = queue.pop()
+
+        # Verificar goal al desencolar garantiza optimalidad (heurística admisible)
+        if problem.isGoalState(current):
+            return _reconstruct_path(parents, initial_state, current)
+
+        if current not in visited:
             visited.add(current)
-            for node,action,cost in problem.getSuccessors(current):
-                new_cost=costs[current] + cost
-                if node not in visited and (node not in costs or costs[node]> new_cost):
-                    costs[node]=new_cost
-                    parents[node]= (current,action) 
-                    queue.update(node,new_cost + heuristic(node,problem))
+            for node, action, cost in problem.getSuccessors(current):
+                new_cost = costs[current] + cost
+                if node not in visited and (node not in costs or costs[node] > new_cost):
+                    costs[node] = new_cost
+                    parents[node] = (current, action)
+                    queue.update(node, new_cost + heuristic(node, problem))
+
     return []
 
 
