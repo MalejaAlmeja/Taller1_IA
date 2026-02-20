@@ -13,6 +13,16 @@ def tinyHouseSearch(problem: SearchProblem):
     w = Directions.WEST
     return [s, s, w, s, w, w, s, w]
 
+def _reconstruct_path(parents, initial_state, goal_state):
+    """Recorre el diccionario de padres desde goal hasta initial y devuelve la lista de acciones."""
+    path = []
+    state = goal_state
+    while state != initial_state:
+        parent, action = parents[state]
+        path.append(action)
+        state = parent
+    path.reverse()
+    return path
 
 def depthFirstSearch(problem: SearchProblem):
     """
