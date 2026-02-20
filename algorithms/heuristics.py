@@ -25,46 +25,31 @@ def euclideanHeuristic(state, problem):
     return ((state[0] - problem.goal[0]) ** 2 + (state[1] - problem.goal[1]) ** 2) ** 0.5
 
 
-def survivorHeuristic(state: Tuple[Tuple, Any], problem: MultiSurvivorProblem):
-    """
-    Your heuristic for the MultiSurvivorProblem.
+def survivorHeuristic(state, problem):
+    position, grid = state
 
-    state: (position, survivors_grid)
-    problem: MultiSurvivorProblem instance
-
-    This must be admissible and preferably consistent.
-
-    Hints:
-    - Use problem.heuristicInfo to cache expensive computations
-    - Go with some simple heuristics first, then build up to more complex ones
-    - Consider: distance to nearest survivor + MST of remaining survivors
-    - Balance heuristic strength vs. computation time (do experiments!)
-    """
-    problem.heuristicInfo
-    # No quedan sobrevivientes
-    if state[1].count() == 0:
+    if grid.count() == 0:
         return 0
-    
-    min_survivor_distance = float('inf')
-    #Tomar la distancia al sobreviviente más cercano
-    grid = state[1]
-    survivor_coordinates = grid.asList()
-    for survivor in survivor_coordinates:
-        #distancia al sobreviviente más cercano con Manhattan
-        distance = abs(state[0][0] - survivor[0]) + abs(state[0][1] - survivor[1])
-        min_survivor_distance = min(min_survivor_distance, distance)
-    #la llave en heuristicInfo la calculamos como la tupla de survivor_coordinates en ese estado/ evita recalcular después 
+
+    survivor_coordinates = sorted(grid.asList())
+
+    # Distancia al sobreviviente más cercano
+    min_dist = min(
+        abs(position[0] - x) + abs(position[1] - y)
+        for (x, y) in survivor_coordinates
+    )
+
     key = tuple(survivor_coordinates)
-    #si no está en heuristicInfo se calcula y guarda y si ya está se saca de ahí 
+
     if key not in problem.heuristicInfo:
         problem.heuristicInfo[key] = MST(survivor_coordinates)
-    mst = problem.heuristicInfo[key]
-    
-    return min_survivor_distance + mst
-        
-        
-    
 
+    mst_cost = problem.heuristicInfo[key]
+
+    return min_dist + mst_cost
+        
+        
+    
     #Tengo otra idea:
     # 1. Hacer MST de los sobrevivientes restantes
     # 2. Tomar la distancia al sobreviviente más cercano
