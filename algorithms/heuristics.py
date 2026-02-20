@@ -25,6 +25,54 @@ def euclideanHeuristic(state, problem):
     return ((state[0] - problem.goal[0]) ** 2 + (state[1] - problem.goal[1]) ** 2) ** 0.5
 
 
+def realDist(pos1, pos2, problem):
+    """Calcula la distancia real (con costos de terreno) entre dos posiciones usando UCS."""
+    key = (pos1, pos2)
+    reverse_key = (pos2, pos1)
+    
+    # Revisar caché en ambas direcciones
+    if key in problem.heuristicInfo:
+        return problem.heuristicInfo[key]
+    if reverse_key in problem.heuristicInfo:
+        return problem.heuristicInfo[reverse_key]
+    
+    # UCS desde pos1 hasta pos2
+    pq = utils.PriorityQueue()
+    pq.push(pos1, 0)
+    visited = {}
+    costs = {pos1: 0}
+
+    while not pq.isEmpty():
+        current = pq.pop()
+        
+        if current in visited:
+            continue
+        visited[current] = True
+        
+        if current == pos2:
+            problem.heuristicInfo[key] = costs[pos2]
+            return costs[pos2]
+        
+        x, y = current
+        for dx, dy in [(0, 1), (0, -1), (1, 0), (-1, 0)]:
+            nextx, nexty = x + dx, y + dy
+            next_pos = (nextx, nexty)
+            
+            if problem.walls[nextx][nexty]:
+                continue
+                
+            step_cost = problem.startingMissionState.getTerrainCost(nextx, nexty)
+            new_cost = costs[current] + step_cost
+            
+            if next_pos not in costs or costs[next_pos] > new_cost:
+                costs[next_pos] = new_cost
+                pq.update(next_pos, new_cost)
+    
+    # Si no hay camino (no debería pasar en mapas bien formados)
+    problem.heuristicInfo[key] = float('inf')
+    return float('inf')
+
+
 def survivorHeuristic(state, problem):
     position, grid = state
 
@@ -33,31 +81,45 @@ def survivorHeuristic(state, problem):
 
     survivor_coordinates = sorted(grid.asList())
 
-    # Distancia al sobreviviente más cercano
+    # Distancia real al sobreviviente más cercano
     min_dist = min(
-        abs(position[0] - x) + abs(position[1] - y)
-        for (x, y) in survivor_coordinates
+        realDist(position, s, problem)
+        for s in survivor_coordinates
     )
 
+    # MST con distancias reales entre sobrevivientes
     key = tuple(survivor_coordinates)
-
     if key not in problem.heuristicInfo:
-        problem.heuristicInfo[key] = MST(survivor_coordinates)
+        problem.heuristicInfo[key] = realMST(survivor_coordinates, problem)
 
-    mst_cost = problem.heuristicInfo[key]
+    return min_dist + problem.heuristicInfo[key]
 
-    return min_dist + mst_cost
+
+def realMST(survivor_coordinates, problem):
+    """MST de Prim usando distancias reales entre sobrevivientes."""
+    if len(survivor_coordinates) <= 1:
+        return 0
+
+    visited = [survivor_coordinates[0]]
+    no_visited = list(survivor_coordinates[1:])
+    cost = 0
+
+    while no_visited:
+        min_edge = float('inf')
+        next_node = None
+        for v in visited:
+            for u in no_visited:
+                d = realDist(v, u, problem)
+                if d < min_edge:
+                    min_edge = d
+                    next_node = u
+        cost += min_edge
+        visited.append(next_node)
+        no_visited.remove(next_node)
+
+    return cost
         
         
-    
-    #Tengo otra idea:
-    # 1. Hacer MST de los sobrevivientes restantes
-    # 2. Tomar la distancia al sobreviviente más cercano
-    # Pero no séeeeee
-    # Usar lo de problem.heuristicInfo para guardar la distancia entre sobrevivientes 
-    # y no tener que recalcularla cada vez maybe
-
-    return min_survivor_distance
     
 def MST(survivor_coordinates):
     #nos da el costo mínimo para visitar a los sobrevivientes restantes con distancia Manhattan
