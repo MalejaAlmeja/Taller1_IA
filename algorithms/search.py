@@ -195,7 +195,7 @@ def uniformCostSearch(problem: SearchProblem):
 
 
     """
-    #Version inicial UCS
+    #Version Optimizada con IA
 
     visited = set()
     queue = utils.PriorityQueue()
